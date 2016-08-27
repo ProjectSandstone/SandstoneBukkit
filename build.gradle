@@ -24,10 +24,31 @@ version '1.0-SNAPSHOT'
 
 apply from: 'gradle/sandstone.gradle'
 
+repositories {
+    maven {
+        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+}
+
 dependencies {
-    compile 'com.github.ProjectSandstone:SandstoneCommon:-SNAPSHOT'
+    compile 'com.github.ProjectSandstone:SandstoneCommon:3d7c549903'
     compile(group: 'org.spigotmc', name: 'spigot-api', version: '1.9-R0.1-SNAPSHOT') {
         exclude group: 'net.md-5', module: 'bungeecord-chat'
     }
 }
 
+shadowJar {
+    dependencies {
+        include(dependency("com.google.inject:guice"))
+        include(dependency("javax.inject:javax.inject"))
+        include(dependency("aopalliance:aopalliance"))
+        include(dependency("com.google.guava:guava"))
+        include(dependency("org.jetbrains.kotlin:kotlin-stdlib"))
+        include(dependency("org.jetbrains.kotlin:kotlin-runtime"))
+        include(dependency("com.github.JonathanxD:JwIUtils"))
+        include(dependency("com.github.ProjectSandstone:SandstoneAPI"))
+        include(dependency("com.github.ProjectSandstone:SandstoneCommon"))
+        include(dependency("com.github.JonathanxD:Adapter"))
+        include(dependency("org.ow2.asm:asm-all"))
+    }
+}

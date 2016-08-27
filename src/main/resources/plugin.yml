@@ -1,0 +1,4 @@
+name: SandstoneBukkit
+main: com.github.projectsandstone.bukkit.SandstoneBukkit
+version: 1.0
+authors: [SandstoneTeam]
