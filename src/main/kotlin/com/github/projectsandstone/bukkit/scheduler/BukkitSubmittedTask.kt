@@ -25,39 +25,48 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit
+package com.github.projectsandstone.bukkit.scheduler
 
-import com.github.projectsandstone.api.Platform
-import com.github.projectsandstone.api.util.version.Version
-import com.github.projectsandstone.common.util.CommonVersionScheme
+import com.github.projectsandstone.api.scheduler.SubmittedTask
+import com.github.projectsandstone.api.scheduler.Task
 import org.bukkit.Bukkit
+import org.bukkit.scheduler.BukkitTask
 
 /**
- * Created by jonathan on 22/08/16.
+ * Created by jonathan on 27/08/16.
  */
-object BukkitPlatform : Platform {
+class BukkitSubmittedTask(override val task: Task, val plugin: Any, val bukkitTask: BukkitTask) : SubmittedTask {
 
-    val regex: Regex = Regex(".*\\(MC: (.*)\\).*", RegexOption.IGNORE_CASE)
+    internal var isCancelled: Boolean = false
 
-    override val minecraftVersion: Version
-        get() {
-            val string = Bukkit.getVersion()
+    override fun cancel() {
+        if(isCancelled)
+            throw IllegalStateException("Cancelled task")
 
-            val matchResult = regex.matchEntire(string) ?: return Version(string, CommonVersionScheme)
+        isCancelled = true
+        bukkitTask.cancel()
+    }
 
-            return Version(matchResult.groupValues[1], CommonVersionScheme)
-        }
+    override fun isRunning(): Boolean {
 
-    override val platformFullName: String
-        get() = Bukkit.getName()
+        if(isCancelled)
+            return false
 
-    override val platformName: String
-        get() = "Bukkit"
+        return Bukkit.getScheduler().isCurrentlyRunning(bukkitTask.taskId)
+    }
 
-    override val platformVersion: Version
-        get() = Version(Bukkit.getBukkitVersion(), CommonVersionScheme)
+    override fun isSubmitted(): Boolean {
+        if(isCancelled)
+            return false
 
-    override fun isInternalClass(name: String?): Boolean {
-        return name != null && (name.startsWith("org.bukkit.") || name.startsWith("org.spigotmc."))
+        return Bukkit.getScheduler().isQueued(bukkitTask.taskId)
+    }
+
+    override fun waitFinish() {
+        if(isCancelled || !this.isSubmitted())
+            return
+
+        while(this.isSubmitted() || this.isRunning())
+            Thread.sleep(1000)
     }
 }

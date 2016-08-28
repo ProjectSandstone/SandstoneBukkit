@@ -25,39 +25,28 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit
+package com.github.projectsandstone.bukkit.util
 
-import com.github.projectsandstone.api.Platform
-import com.github.projectsandstone.api.util.version.Version
-import com.github.projectsandstone.common.util.CommonVersionScheme
-import org.bukkit.Bukkit
+import java.util.concurrent.TimeUnit
 
 /**
- * Created by jonathan on 22/08/16.
+ * Created by jonathan on 27/08/16.
  */
-object BukkitPlatform : Platform {
+object MinecraftTicks {
 
-    val regex: Regex = Regex(".*\\(MC: (.*)\\).*", RegexOption.IGNORE_CASE)
+    val MILLI_PER_TICK = 50
+    val NANO_PER_TICK = 1000000 * MILLI_PER_TICK
 
-    override val minecraftVersion: Version
-        get() {
-            val string = Bukkit.getVersion()
-
-            val matchResult = regex.matchEntire(string) ?: return Version(string, CommonVersionScheme)
-
-            return Version(matchResult.groupValues[1], CommonVersionScheme)
-        }
-
-    override val platformFullName: String
-        get() = Bukkit.getName()
-
-    override val platformName: String
-        get() = "Bukkit"
-
-    override val platformVersion: Version
-        get() = Version(Bukkit.getBukkitVersion(), CommonVersionScheme)
-
-    override fun isInternalClass(name: String?): Boolean {
-        return name != null && (name.startsWith("org.bukkit.") || name.startsWith("org.spigotmc."))
+    fun unitToTick(time: Long, timeUnit: TimeUnit) : Long {
+        return this.milliToTicks(timeUnit.toMillis(time))
     }
+
+    fun milliToTicks(milliseconds: Long) : Long {
+        return Math.round(milliseconds.toDouble() / MILLI_PER_TICK.toDouble())
+    }
+
+    fun nanoToTicks(nanoseconds: Long) : Long {
+        return Math.round(nanoseconds.toDouble() / NANO_PER_TICK.toDouble())
+    }
+
 }

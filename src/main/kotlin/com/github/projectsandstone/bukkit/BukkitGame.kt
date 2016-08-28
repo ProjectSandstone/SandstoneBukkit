@@ -27,6 +27,7 @@
  */
 package com.github.projectsandstone.bukkit
 
+import com.github.projectsandstone.bukkit.scheduler.BukkitScheduler
 import com.github.projectsandstone.common.AbstractGame
 import java.nio.file.Paths
 
@@ -37,5 +38,6 @@ object BukkitGame : AbstractGame(
         gamePath = Paths.get("."),
         savePath = Paths.get("."),
         platform = BukkitPlatform,
-        server = BukkitServer) {
+        server = BukkitServer,
+        scheduler = BukkitScheduler) {
 }

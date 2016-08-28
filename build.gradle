@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.ProjectSandstone:SandstoneCommon:3d7c549903'
+    compile 'com.github.ProjectSandstone:SandstoneCommon:f3eb56e255'
     compile(group: 'org.spigotmc', name: 'spigot-api', version: '1.9-R0.1-SNAPSHOT') {
         exclude group: 'net.md-5', module: 'bungeecord-chat'
     }
@@ -50,5 +50,6 @@ shadowJar {
         include(dependency("com.github.ProjectSandstone:SandstoneCommon"))
         include(dependency("com.github.JonathanxD:Adapter"))
         include(dependency("org.ow2.asm:asm-all"))
+        include(dependency("com.github.zafarkhaja:java-semver"))
     }
 }
