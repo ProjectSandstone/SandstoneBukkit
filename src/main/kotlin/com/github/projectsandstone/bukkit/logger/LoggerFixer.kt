@@ -25,15 +25,18 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.events
+package com.github.projectsandstone.bukkit.logger
 
-import com.github.projectsandstone.api.event.Event
-import com.github.projectsandstone.api.event.info.Info
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 
 /**
- * Created by jonathan on 23/08/16.
+ * Created by jonathan on 28/08/16.
  */
-// TODO: Implement events in common
-interface ImplEvent : Event {
-    override fun getInfo(): Info = Info(emptyList())
+class LoggerFixer(val logger: Logger) : Logger(logger.name, logger.resourceBundleName) {
+    override fun log(record: LogRecord) {
+        record.loggerName = logger.name
+
+        logger.log(record)
+    }
 }

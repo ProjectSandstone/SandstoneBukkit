@@ -27,16 +27,20 @@
  */
 package com.github.projectsandstone.bukkit
 
+import com.github.jonathanxd.iutils.exceptions.RethrowException
 import com.github.projectsandstone.api.Sandstone
 import com.github.projectsandstone.api.constants.SandstonePlugin
-import com.github.projectsandstone.bukkit.events.InitializationEventImpl
-import com.github.projectsandstone.bukkit.events.PostInitializationEventImpl
-import com.github.projectsandstone.bukkit.events.PreInitializationEventImpl
 import com.github.projectsandstone.bukkit.logger.BukkitLogger
 import com.github.projectsandstone.bukkit.logger.BukkitLoggerFactory
+import com.github.projectsandstone.bukkit.logger.LoggerFixer
 import com.github.projectsandstone.common.SandstoneInit
+import com.github.projectsandstone.common.event.init.InitializationEventImpl
+import com.github.projectsandstone.common.event.init.PostInitializationEventImpl
+import com.github.projectsandstone.common.event.init.PreInitializationEventImpl
+import com.github.projectsandstone.common.plugin.SandstonePluginManager
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
+import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -52,8 +56,9 @@ class SandstoneBukkit : JavaPlugin() {
         instance = this
         this.createDir()
 
+        SandstoneInit.initConsts()
         SandstoneInit.initGame(BukkitGame)
-        SandstoneInit.initLogger(BukkitLogger(this.logger))
+        SandstoneInit.initLogger(BukkitLogger(LoggerFixer(this.logger)))
         SandstoneInit.initLoggerFactory(BukkitLoggerFactory)
 
         SandstoneInit.loadPlugins(pluginsDir)
@@ -65,27 +70,31 @@ class SandstoneBukkit : JavaPlugin() {
     }
 
     override fun onEnable() {
+        this.initialize()
+
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, {
             if(taskId == -1) {
                 Sandstone.logger.warn("Invalid Task Id = (-1)")
             }
+
             if (Bukkit.getWorld("world") != null) {
                 this.worldLoaded()
                 Bukkit.getScheduler().cancelTask(taskId)
                 taskId = -1
             }
-        }, 5 * 20L, 5 * 20L)
-        this.initialize()
+        }, 1 * 20L, 1 * 20L)
     }
 
+    override fun onDisable() {
+        // TODO: Fix plugin reload
+    }
 
     fun worldLoaded() {
         this.postInitialize()
     }
 
     fun preInitialize() {
-        // TODO: Dispatch async
-        Sandstone.game.eventManager.dispatch(PreInitializationEventImpl(), SandstonePlugin)
+        Sandstone.game.eventManager.dispatchAsync(PreInitializationEventImpl(), SandstonePlugin)
     }
 
     fun initialize() {

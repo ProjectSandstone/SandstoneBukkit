@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.ProjectSandstone:SandstoneCommon:f3eb56e255'
+    compile 'com.github.ProjectSandstone:SandstoneCommon:c8124fa44b'
     compile(group: 'org.spigotmc', name: 'spigot-api', version: '1.9-R0.1-SNAPSHOT') {
         exclude group: 'net.md-5', module: 'bungeecord-chat'
     }

@@ -40,7 +40,7 @@ import java.time.Duration
  * Created by jonathan on 27/08/16.
  */
 object BukkitScheduler : SandstoneScheduler() {
-    override fun submit(plugin: Any, task: Task): SubmittedTask {
+    override fun submit(task: Task): SubmittedTask {
         val interval = task.interval
         val isRepeating = interval != Duration.ZERO
 
@@ -76,7 +76,7 @@ object BukkitScheduler : SandstoneScheduler() {
         }
 
 
-        return BukkitSubmittedTask(task, plugin, bukkitTask)
+        return BukkitSubmittedTask(task, bukkitTask)
     }
 
     internal fun Duration.toMinecraftTicks(): Long {

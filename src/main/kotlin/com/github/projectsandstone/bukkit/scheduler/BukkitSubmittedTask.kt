@@ -35,7 +35,7 @@ import org.bukkit.scheduler.BukkitTask
 /**
  * Created by jonathan on 27/08/16.
  */
-class BukkitSubmittedTask(override val task: Task, val plugin: Any, val bukkitTask: BukkitTask) : SubmittedTask {
+class BukkitSubmittedTask(override val task: Task, val bukkitTask: BukkitTask) : SubmittedTask {
 
     internal var isCancelled: Boolean = false
 
