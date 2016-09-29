@@ -1,0 +1,3 @@
+com.github.projectsandstone.bukkit.converter.TextConverter
+com.github.projectsandstone.bukkit.converter.CollectionConverter
+com.github.projectsandstone.bukkit.converter.FileToPathConverter

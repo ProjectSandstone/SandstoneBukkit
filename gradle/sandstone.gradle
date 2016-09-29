@@ -42,7 +42,11 @@ dependencies {
     compile 'com.google.inject:guice:4.1.0'
 
     // Utilities
-    compile 'com.github.JonathanxD:JwIUtils:2.5.0'
+    compile 'com.flowpowered:flow-math:1.0.3'
+    compile 'com.github.JonathanxD:JwIUtils:2.7.1'
+    compile 'com.github.JonathanxD:CodeAPI:1.14.2-SNAPSHOT'
+    compile 'com.github.JonathanxD:Adapter:3.8.0'
+    compile 'com.github.JonathanxD:CodeProxy:1.0.4'
 
     // Kotlin
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -72,6 +76,7 @@ shadowJar {
 dokka {
     outputFormat = 'javadoc'
     outputDirectory = javadoc.destinationDir
+    includes = ['src/main/Module.md']
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {

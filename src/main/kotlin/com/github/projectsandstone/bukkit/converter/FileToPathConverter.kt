@@ -25,41 +25,25 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.logger
+package com.github.projectsandstone.bukkit.converter
 
-import com.github.projectsandstone.api.logging.LogLevel
-import com.github.projectsandstone.api.logging.Logger
-import java.util.logging.LogRecord
+import com.github.jonathanxd.adapter.info.CallInfo
+import com.github.jonathanxd.adapter.spec.ConverterSpec
+import com.github.projectsandstone.common.adapter.RegistryCandidate
+import com.github.projectsandstone.common.adapter.annotation.RegistryType
+import com.github.projectsandstone.common.adapter.annotation.RegistryTypes
+import java.io.File
+import java.nio.file.Path
 
-/**
- * Created by jonathan on 22/08/16.
- */
-class BukkitLogger(val logger: java.util.logging.Logger) : Logger {
+object FileToPathConverter : RegistryCandidate<ConverterSpec> {
 
-    override fun log(level: LogLevel, exception: Exception) {
-        exception.printStackTrace {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
+    override val id = "FILE_TO_PATH"
+    override val spec = ConverterSpec(FileToPathConverter::class.java, "convert", Path::class.java, arrayOf(File::class.java))
+    override val registryType = RegistryTypes.Converter(File::class.java, Path::class.java)
 
-    override fun log(level: LogLevel, exception: Exception, message: String) {
-        exception.printStackTrace (message) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
-
-    override fun log(level: LogLevel, exception: Exception, format: String, vararg objects: Any) {
-        exception.printStackTrace(String.format(format, *objects)) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
-
-    override fun log(level: LogLevel, message: String) {
-        logger.log(LogRecord(level.toJava(), message))
-    }
-
-    override fun log(level: LogLevel, format: String, vararg objects: Any) {
-        logger.log(LogRecord(level.toJava(), String.format(format, *objects)))
+    @JvmStatic
+    fun convert(callInfo: CallInfo, file: File): Path {
+        return file.toPath()
     }
 
 }

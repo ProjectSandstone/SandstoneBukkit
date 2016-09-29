@@ -27,20 +27,17 @@
  */
 package com.github.projectsandstone.bukkit
 
-import com.github.jonathanxd.iutils.exceptions.RethrowException
 import com.github.projectsandstone.api.Sandstone
 import com.github.projectsandstone.api.constants.SandstonePlugin
+import com.github.projectsandstone.api.event.SandstoneEventFactory
 import com.github.projectsandstone.bukkit.logger.BukkitLogger
 import com.github.projectsandstone.bukkit.logger.BukkitLoggerFactory
 import com.github.projectsandstone.bukkit.logger.LoggerFixer
 import com.github.projectsandstone.common.SandstoneInit
-import com.github.projectsandstone.common.event.init.InitializationEventImpl
-import com.github.projectsandstone.common.event.init.PostInitializationEventImpl
-import com.github.projectsandstone.common.event.init.PreInitializationEventImpl
-import com.github.projectsandstone.common.plugin.SandstonePluginManager
+import com.github.projectsandstone.common.adapter.Adapters
+import com.github.projectsandstone.common.adapter.SandstoneAdapters
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
-import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -50,19 +47,40 @@ import java.nio.file.Paths
 class SandstoneBukkit : JavaPlugin() {
 
     var taskId: Int = -1
-
+    private var serverInstanceAvailable: Boolean = false
 
     init {
         instance = this
         this.createDir()
 
+        this.logger.info("Loading Sandstone adapters...")
+
+        AdapterRegistry.registerAdapters()
+        // Save
+        Adapters.adapters.save(SandstoneAdapters.adaptersDir)
+
+        val adaptedClasses = Adapters.adapters.adapterEnvironment.adaptedClasses
+        val loadedAdapters = adaptedClasses.size
+
+        this.logger.info("$loadedAdapters adapters loaded!")
+
+        val names = adaptedClasses.map { it.adapterClass.simpleName }.joinToString { it }
+
+        this.logger.info("Adapters loaded: $names!")
+
         SandstoneInit.initConsts()
+        SandstoneInit.initPath(Paths.get("./Sandstone/"))
         SandstoneInit.initGame(BukkitGame)
         SandstoneInit.initLogger(BukkitLogger(LoggerFixer(this.logger)))
         SandstoneInit.initLoggerFactory(BukkitLoggerFactory)
 
         SandstoneInit.loadPlugins(pluginsDir)
         SandstoneInit.startPlugins()
+
+    }
+
+    fun isServerAvailable(): Boolean {
+        return this.serverInstanceAvailable
     }
 
     override fun onLoad() {
@@ -73,12 +91,17 @@ class SandstoneBukkit : JavaPlugin() {
         this.initialize()
 
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, {
-            if(taskId == -1) {
+            if (taskId == -1) {
                 Sandstone.logger.warn("Invalid Task Id = (-1)")
             }
 
             if (Bukkit.getWorld("world") != null) {
                 this.worldLoaded()
+
+                this.serverStarting()
+                this.serverInstanceAvailable = true
+                this.serverStarted()
+
                 Bukkit.getScheduler().cancelTask(taskId)
                 taskId = -1
             }
@@ -86,6 +109,9 @@ class SandstoneBukkit : JavaPlugin() {
     }
 
     override fun onDisable() {
+        Bukkit.getServer()
+        this.serverStopping()
+        this.serverStopped()
         // TODO: Fix plugin reload
     }
 
@@ -93,16 +119,32 @@ class SandstoneBukkit : JavaPlugin() {
         this.postInitialize()
     }
 
+    fun serverStarting() {
+        Sandstone.game.eventManager.dispatch(SandstoneEventFactory.createServerStartingEvent(), SandstonePlugin)
+    }
+
+    fun serverStarted() {
+        Sandstone.game.eventManager.dispatch(SandstoneEventFactory.createServerStartedEvent(), SandstonePlugin)
+    }
+
     fun preInitialize() {
-        Sandstone.game.eventManager.dispatchAsync(PreInitializationEventImpl(), SandstonePlugin)
+        Sandstone.game.eventManager.dispatchAsync(SandstoneEventFactory.createPreInitializationEvent(), SandstonePlugin)
     }
 
     fun initialize() {
-        Sandstone.game.eventManager.dispatch(InitializationEventImpl(), SandstonePlugin)
+        Sandstone.game.eventManager.dispatch(SandstoneEventFactory.createInitializationEvent(), SandstonePlugin)
     }
 
     fun postInitialize() {
-        Sandstone.game.eventManager.dispatch(PostInitializationEventImpl(), SandstonePlugin)
+        Sandstone.game.eventManager.dispatch(SandstoneEventFactory.createPostInitializationEvent(), SandstonePlugin)
+    }
+
+    fun serverStopping() {
+        Sandstone.game.eventManager.dispatch(SandstoneEventFactory.createServerStoppingEvent(), SandstonePlugin)
+    }
+
+    fun serverStopped() {
+        Sandstone.game.eventManager.dispatch(SandstoneEventFactory.createServerStoppedEvent(), SandstonePlugin)
     }
 
     companion object {

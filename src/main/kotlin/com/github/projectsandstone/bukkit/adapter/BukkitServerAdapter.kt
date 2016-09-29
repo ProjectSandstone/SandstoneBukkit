@@ -25,12 +25,38 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit
+package com.github.projectsandstone.bukkit.adapter
 
+import com.github.jonathanxd.adapter.annotations.*
 import com.github.projectsandstone.api.Server
+import com.github.projectsandstone.api.world.World
+import com.github.projectsandstone.bukkit.converter.CollectionConverter
 
-/**
- * Created by jonathan on 22/08/16.
- */
-object BukkitServer : Server {
+@AdapterEnv
+@Adapter(target = org.bukkit.Server::class, interfaces = arrayOf(Server::class))
+class BukkitServerAdapter : Server {
+
+    override val ip: String
+        @Invoke(method = "getIp")
+        get() = throw UnsupportedOperationException()
+
+    override val maxPlayers: Int
+        @Invoke(method = "getMaxPlayers")
+        get() = throw UnsupportedOperationException()
+
+    override val motd: String
+        @Invoke(method = "getMotd")
+        get() = throw UnsupportedOperationException()
+
+    override val port: Int
+        @Invoke(method = "getPort")
+        get() = throw UnsupportedOperationException()
+
+    override val serverName: String
+        @Invoke(method = "getServerName")
+        get() = throw UnsupportedOperationException()
+
+    override val worlds: List<World>
+        @Invoke(method = "getWorlds", returnType = Return(type = List::class, converter = Converter(registryId = CollectionConverter.id_)))
+        get() = throw UnsupportedOperationException()
 }

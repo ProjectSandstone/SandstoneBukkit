@@ -27,17 +27,35 @@
  */
 package com.github.projectsandstone.bukkit
 
+import com.github.projectsandstone.api.Platform
+import com.github.projectsandstone.api.Server
+import com.github.projectsandstone.api.scheduler.Scheduler
+import com.github.projectsandstone.api.service.ServiceManager
 import com.github.projectsandstone.bukkit.scheduler.BukkitScheduler
+import com.github.projectsandstone.bukkit.service.BukkitServiceManager
 import com.github.projectsandstone.common.AbstractGame
+import com.github.projectsandstone.common.adapter.Adapters
+import org.bukkit.Bukkit
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
  * Created by jonathan on 22/08/16.
  */
-object BukkitGame : AbstractGame(
-        gamePath = Paths.get("."),
-        savePath = Paths.get("."),
-        platform = BukkitPlatform,
-        server = BukkitServer,
-        scheduler = BukkitScheduler) {
+object BukkitGame : AbstractGame() {
+
+    override val gamePath: Path = Paths.get(".")
+    override val savePath: Path = Paths.get(".")
+    override val serviceManager: ServiceManager = BukkitServiceManager()
+    override val scheduler: Scheduler = BukkitScheduler
+    override val platform: Platform = BukkitPlatform
+
+    override val server: Server
+        get() {
+            if(!SandstoneBukkit.getSandstonePluginInstance().isServerAvailable()) {
+                throw IllegalStateException("Server instance is not available yet!")
+            } else {
+                return Adapters.adapters.adapt(org.bukkit.Server::class.java, Bukkit.getServer()) as Server
+            }
+        }
 }

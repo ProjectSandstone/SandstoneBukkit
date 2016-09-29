@@ -25,41 +25,29 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.logger
+package com.github.projectsandstone.bukkit.service
 
-import com.github.projectsandstone.api.logging.LogLevel
-import com.github.projectsandstone.api.logging.Logger
-import java.util.logging.LogRecord
+import com.github.projectsandstone.bukkit.SandstoneBukkit
+import com.github.projectsandstone.common.service.SandstoneServiceManager
+import org.bukkit.Bukkit
+import org.bukkit.plugin.ServicePriority
 
 /**
- * Created by jonathan on 22/08/16.
+ * Created by jonathan on 28/08/16.
  */
-class BukkitLogger(val logger: java.util.logging.Logger) : Logger {
+class BukkitServiceManager : SandstoneServiceManager() {
 
-    override fun log(level: LogLevel, exception: Exception) {
-        exception.printStackTrace {
-            logger.log(LogRecord(level.toJava(), it))
+    override fun <T : Any> internalProvide(service: Class<T>): T? {
+        val registration = Bukkit.getServicesManager().getRegistration(service)
+
+        if(registration != null) {
+            return registration.provider
+        } else {
+            return null
         }
     }
 
-    override fun log(level: LogLevel, exception: Exception, message: String) {
-        exception.printStackTrace (message) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
+    override fun <T : Any> internalSetProvider(service: Class<T>, instance: T) {
+        Bukkit.getServicesManager().register(service, instance, SandstoneBukkit.getSandstonePluginInstance(), ServicePriority.Normal)
     }
-
-    override fun log(level: LogLevel, exception: Exception, format: String, vararg objects: Any) {
-        exception.printStackTrace(String.format(format, *objects)) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
-
-    override fun log(level: LogLevel, message: String) {
-        logger.log(LogRecord(level.toJava(), message))
-    }
-
-    override fun log(level: LogLevel, format: String, vararg objects: Any) {
-        logger.log(LogRecord(level.toJava(), String.format(format, *objects)))
-    }
-
 }

@@ -25,41 +25,7 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.logger
+package com.github.projectsandstone.bukkit.adapter.entity.living
 
-import com.github.projectsandstone.api.logging.LogLevel
-import com.github.projectsandstone.api.logging.Logger
-import java.util.logging.LogRecord
-
-/**
- * Created by jonathan on 22/08/16.
- */
-class BukkitLogger(val logger: java.util.logging.Logger) : Logger {
-
-    override fun log(level: LogLevel, exception: Exception) {
-        exception.printStackTrace {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
-
-    override fun log(level: LogLevel, exception: Exception, message: String) {
-        exception.printStackTrace (message) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
-
-    override fun log(level: LogLevel, exception: Exception, format: String, vararg objects: Any) {
-        exception.printStackTrace(String.format(format, *objects)) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
-
-    override fun log(level: LogLevel, message: String) {
-        logger.log(LogRecord(level.toJava(), message))
-    }
-
-    override fun log(level: LogLevel, format: String, vararg objects: Any) {
-        logger.log(LogRecord(level.toJava(), String.format(format, *objects)))
-    }
-
+class LivingEntityAdapter {
 }

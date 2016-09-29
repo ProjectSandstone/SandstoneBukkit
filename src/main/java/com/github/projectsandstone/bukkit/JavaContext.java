@@ -25,41 +25,27 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.logger
+package com.github.projectsandstone.bukkit;
 
-import com.github.projectsandstone.api.logging.LogLevel
-import com.github.projectsandstone.api.logging.Logger
-import java.util.logging.LogRecord
+import com.github.jonathanxd.adapter.info.CallInfo;
+import com.github.projectsandstone.api.text.Text;
+import com.github.projectsandstone.api.text.channel.MessageReceiver;
 
-/**
- * Created by jonathan on 22/08/16.
- */
-class BukkitLogger(val logger: java.util.logging.Logger) : Logger {
-
-    override fun log(level: LogLevel, exception: Exception) {
-        exception.printStackTrace {
-            logger.log(LogRecord(level.toJava(), it))
-        }
+public final class JavaContext {
+    private JavaContext() {
+        throw new IllegalStateException();
     }
 
-    override fun log(level: LogLevel, exception: Exception, message: String) {
-        exception.printStackTrace (message) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
+    public static void invokeSendMessages(CallInfo callInfo, Iterable<Text> iterable) {
+
+        MessageReceiver receiver = (MessageReceiver) callInfo.getAdapterClassInfo().getWrappedInstance();
+
+        MessageReceiver.DefaultImpls.sendMessages(receiver, iterable);
     }
 
-    override fun log(level: LogLevel, exception: Exception, format: String, vararg objects: Any) {
-        exception.printStackTrace(String.format(format, *objects)) {
-            logger.log(LogRecord(level.toJava(), it))
-        }
-    }
+    public static void invokeSendMessages(CallInfo callInfo, Text... texts) {
+        MessageReceiver receiver = (MessageReceiver) callInfo.getAdapterClassInfo().getWrappedInstance();
 
-    override fun log(level: LogLevel, message: String) {
-        logger.log(LogRecord(level.toJava(), message))
+        MessageReceiver.DefaultImpls.sendMessages(receiver, texts);
     }
-
-    override fun log(level: LogLevel, format: String, vararg objects: Any) {
-        logger.log(LogRecord(level.toJava(), String.format(format, *objects)))
-    }
-
 }
