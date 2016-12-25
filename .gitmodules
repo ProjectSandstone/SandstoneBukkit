@@ -1,3 +1,6 @@
 [submodule "SandstoneCommon"]
 	path = SandstoneCommon
 	url = https://github.com/ProjectSandstone/SandstoneCommon
+[submodule "SandstoneAPI_PC"]
+	path = SandstoneAPI_PC
+	url = https://github.com/ProjectSandstone/SandstoneAPI_PC.git
