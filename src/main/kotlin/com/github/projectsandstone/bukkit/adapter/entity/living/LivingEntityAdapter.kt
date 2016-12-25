@@ -27,5 +27,8 @@
  */
 package com.github.projectsandstone.bukkit.adapter.entity.living
 
-class LivingEntityAdapter {
-}
+import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.projectsandstone.api.entity.living.LivingEntity
+import com.github.projectsandstone.bukkit.util.alias.BukkitLivingEntity
+
+interface LivingEntityAdapter<out T : BukkitLivingEntity> : Adapter<T>, LivingEntity

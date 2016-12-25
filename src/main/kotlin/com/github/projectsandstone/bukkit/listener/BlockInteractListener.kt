@@ -25,37 +25,33 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.listener
 
-import com.github.jonathanxd.adapterhelper.Adapter
 import com.github.projectsandstone.api.Sandstone
-import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.projectsandstone.api.constants.SandstonePlugin
+import com.github.projectsandstone.api.event.command.CommandSendEvent
+import com.github.projectsandstone.api.event.player.PlayerBlockInteractEvent
+import com.github.projectsandstone.bukkit.util.convert
+import com.github.projectsandstone.common.adapter.Adapters
+import org.bukkit.event.Event
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerCommandPreprocessEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.server.ServerCommandEvent
+import org.bukkit.plugin.EventExecutor
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+object BlockInteractListener : EventExecutor, Listener {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
-
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
-
-    override val name: String
-        get() = this.adapteeInstance.name
-
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
+    override fun execute(listener: Listener, event: Event) {
+        if (event is PlayerInteractEvent) {
+            if(event.clickedBlock != null) {
+                val sand = Adapters.adapters.convert<PlayerInteractEvent, PlayerBlockInteractEvent>(event, null)
+                Sandstone.eventManager.dispatch(sand, SandstonePlugin)
             }
-
-            return null
+        } else {
+            Sandstone.logger.info("Unknown event type: '${event.javaClass}'!")
         }
+
+    }
 
 }

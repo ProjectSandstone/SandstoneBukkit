@@ -27,38 +27,55 @@
  */
 package com.github.projectsandstone.bukkit
 
-import com.github.projectsandstone.api.util.toType
+import com.github.projectsandstone.api.block.BlockType
+import com.github.projectsandstone.api.entity.EntityType
+import com.github.projectsandstone.api.event.command.CommandSendEvent
+import com.github.projectsandstone.api.event.player.PlayerBlockInteractEvent
+import com.github.projectsandstone.api.event.player.PlayerMessageChannelEvent
+import com.github.projectsandstone.api.text.Text
+import com.github.projectsandstone.api.world.Location
 import com.github.projectsandstone.bukkit.adapter.BukkitServerAdapter
-import com.github.projectsandstone.bukkit.adapter.entity.EntityAdapter
+import com.github.projectsandstone.bukkit.adapter.block.BlockAdapter
 import com.github.projectsandstone.bukkit.adapter.entity.living.player.PlayerAdapter
-import com.github.projectsandstone.bukkit.adapter.entity.living.player.UserAdapter
+import com.github.projectsandstone.bukkit.adapter.world.ChunkFactory
 import com.github.projectsandstone.bukkit.adapter.world.WorldAdapter
-import com.github.projectsandstone.bukkit.converter.FileToPathConverter
+import com.github.projectsandstone.bukkit.converter.*
+import com.github.projectsandstone.bukkit.converter.event.PlayerChatConverter
+import com.github.projectsandstone.bukkit.converter.event.PlayerCommandConverter
+import com.github.projectsandstone.bukkit.converter.event.PlayerInteractConverter
+import com.github.projectsandstone.bukkit.converter.event.ServerCommandConverter
+import com.github.projectsandstone.bukkit.util.alias.*
+import com.github.projectsandstone.bukkit.util.register
 import com.github.projectsandstone.common.adapter.Adapters
-import java.io.File
-import java.nio.file.Path
+import org.bukkit.event.player.AsyncPlayerChatEvent
+import org.bukkit.event.player.PlayerInteractEvent
 
 object AdapterRegistry {
 
     fun registerAdapters() {
         // ----> Initialized Constants class too late
         val adapters = Adapters.adapters
-        val factory = adapters.adapterFactory
 
-        adapters.registerAll(this.javaClass.classLoader, "converters")
+        adapters.registerConverter(Array<Any>::class.java, List::class.java, ArrayToListConverter)
+        adapters.registerConverter(BlockType::class.java, BukkitMaterial::class.java, BlockTypeConverter)
+        adapters.registerConverter(Class::class.java, Class::class.java, ClassConverter)
+        adapters.registerConverter(Collection::class.java, Collection::class.java, CollectionConverter)
+        @Suppress("UNCHECKED_CAST")
+        adapters.registerConverter(EntityType::class.java, Class::class.java as Class<Class<BukkitEntity>>, EntityTypeConverter)
+        adapters.registerConverter(Location::class.java, BukkitLocation::class.java, LocationConverter)
+        adapters.registerConverter(Text::class.java, String::class.java, TextConverter)
+        adapters.registerConverter(BukkitPlayerCommandPreprocessEvent::class.java, CommandSendEvent::class.java, PlayerCommandConverter)
+        adapters.registerConverter(BukkitServerCommandEvent::class.java, CommandSendEvent::class.java, ServerCommandConverter)
+        adapters.registerConverter(PlayerInteractEvent::class.java, PlayerBlockInteractEvent::class.java, PlayerInteractConverter)
+        adapters.registerConverter(AsyncPlayerChatEvent::class.java, PlayerMessageChannelEvent::class.java, PlayerChatConverter)
 
-        /*
-        adapters.adapterEnvironment.registerConverter(CollectionConverter.id, Collection::class.toType(), Collection::class.toType(), CollectionConverter.spec)
-        */
-        // ?
+        // Adapters
 
-        adapters.adapterEnvironment.registerConverter(File::class.toType(), Path::class.toType(), FileToPathConverter.spec)
-
-        adapters.registerAdapterSpecification(factory.fromAnnotatedClass(EntityAdapter::class.java).adapterSpecification)
-        adapters.registerAdapterSpecification(factory.fromAnnotatedClass(UserAdapter::class.java).adapterSpecification)
-        adapters.registerAdapterSpecification(factory.fromAnnotatedClass(PlayerAdapter::class.java).adapterSpecification)
-        adapters.registerAdapterSpecification(factory.fromAnnotatedClass(BukkitServerAdapter::class.java).adapterSpecification)
-        adapters.registerAdapterSpecification(factory.fromAnnotatedClass(WorldAdapter::class.java).adapterSpecification)
+        adapters.register(::BukkitServerAdapter)
+        adapters.register(::WorldAdapter)
+        adapters.register(::PlayerAdapter)
+        adapters.register(::BlockAdapter)
+        adapters.register(ChunkFactory)
     }
 
 }

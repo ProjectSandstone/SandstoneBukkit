@@ -25,37 +25,19 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.adapter.block
 
 import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
 import com.github.projectsandstone.api.Sandstone
-import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.projectsandstone.api.block.BlockState
+import com.github.projectsandstone.api.block.BlockType
+import com.github.projectsandstone.bukkit.util.alias.BukkitBlockState
+import com.github.projectsandstone.common.util.extension.formatToSandstoneRegistryId
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+class BlockAdapter(override val adapteeInstance: BukkitBlockState, override val adapterManager: AdapterManager) : Adapter<BukkitBlockState>, BlockState {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
-
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
-
-    override val name: String
-        get() = this.adapteeInstance.name
-
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
-            }
-
-            return null
-        }
+    override val type: BlockType
+        get() = Sandstone.game.registry[this.adapteeInstance.block.type.formatToSandstoneRegistryId(), BlockType::class.java]!!
 
 }

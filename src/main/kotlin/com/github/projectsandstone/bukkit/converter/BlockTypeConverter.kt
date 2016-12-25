@@ -25,37 +25,38 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.converter
 
 import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
 import com.github.projectsandstone.api.Sandstone
-import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.projectsandstone.api.block.BlockType
+import com.github.projectsandstone.common.util.extension.formatToSandstoneRegistryId
+import org.bukkit.Material
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+object BlockTypeConverter : Converter<BlockType, Material> {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
+    override fun convert(input: BlockType, adapter: Adapter<*>?, manager: AdapterManager): Material {
+        return try {
+            Material.valueOf(input.name.toUpperCase())
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Can't convert '${input.name}' (from BlockType: $input) to Material.", e)
+        }
+    }
 
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
+    override fun revert(): Converter<Material, BlockType> = Revert
 
-    override val name: String
-        get() = this.adapteeInstance.name
+    private object Revert : Converter<Material, BlockType> {
+        override fun convert(input: Material, adapter: Adapter<*>?, manager: AdapterManager): BlockType {
 
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
-            }
+            val id = input.formatToSandstoneRegistryId()
 
-            return null
+            return Sandstone.game.registry.getEntry(id, BlockType::class.java)
+                    ?: throw IllegalArgumentException("Cannot find BlockType '$id' ( Material: $input) in registry.")
         }
 
+        override fun revert(): Converter<BlockType, Material> = BlockTypeConverter
+
+    }
 }

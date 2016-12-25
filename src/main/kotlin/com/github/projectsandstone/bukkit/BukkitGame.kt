@@ -31,6 +31,8 @@ import com.github.projectsandstone.api.Platform
 import com.github.projectsandstone.api.Server
 import com.github.projectsandstone.api.scheduler.Scheduler
 import com.github.projectsandstone.api.service.ServiceManager
+import com.github.projectsandstone.api.util.edition.GameEdition
+import com.github.projectsandstone.api.util.edition.GameEditions
 import com.github.projectsandstone.bukkit.scheduler.BukkitScheduler
 import com.github.projectsandstone.bukkit.service.BukkitServiceManager
 import com.github.projectsandstone.common.AbstractGame
@@ -49,13 +51,14 @@ object BukkitGame : AbstractGame() {
     override val serviceManager: ServiceManager = BukkitServiceManager()
     override val scheduler: Scheduler = BukkitScheduler
     override val platform: Platform = BukkitPlatform
+    override val edition: GameEdition = GameEditions.PC
 
     override val server: Server
         get() {
             if(!SandstoneBukkit.getSandstonePluginInstance().isServerAvailable()) {
                 throw IllegalStateException("Server instance is not available yet!")
             } else {
-                return Adapters.adapters.adapt(org.bukkit.Server::class.java, Bukkit.getServer()) as Server
+                return Adapters.adapters.adaptUnchecked(org.bukkit.Server::class.java, Bukkit.getServer(), Server::class.java)
             }
         }
 }

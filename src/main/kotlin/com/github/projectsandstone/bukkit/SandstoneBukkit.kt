@@ -28,14 +28,16 @@
 package com.github.projectsandstone.bukkit
 
 import com.github.projectsandstone.api.Sandstone
+import com.github.projectsandstone.api.block.BlockTypes
 import com.github.projectsandstone.api.constants.SandstonePlugin
+import com.github.projectsandstone.api.entity.EntityTypes
 import com.github.projectsandstone.api.event.SandstoneEventFactory
+import com.github.projectsandstone.api.item.ItemTypes
 import com.github.projectsandstone.bukkit.logger.BukkitLogger
 import com.github.projectsandstone.bukkit.logger.BukkitLoggerFactory
 import com.github.projectsandstone.bukkit.logger.LoggerFixer
 import com.github.projectsandstone.common.SandstoneInit
 import com.github.projectsandstone.common.adapter.Adapters
-import com.github.projectsandstone.common.adapter.SandstoneAdapters
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import java.nio.file.Files
@@ -56,15 +58,12 @@ class SandstoneBukkit : JavaPlugin() {
         this.logger.info("Loading Sandstone adapters...")
 
         AdapterRegistry.registerAdapters()
-        // Save
-        Adapters.adapters.save(SandstoneAdapters.adaptersDir)
 
-        val adaptedClasses = Adapters.adapters.adapterEnvironment.adaptedClasses
-        val loadedAdapters = adaptedClasses.size
+        val loadedAdapters = Adapters.adapters.getAdapterSpecificationSet().size
 
         this.logger.info("$loadedAdapters adapters loaded!")
 
-        val names = adaptedClasses.map { it.adapterClass.simpleName }.joinToString { it }
+        val names = Adapters.adapters.getAdapterSpecificationSet().map { it.adapterClass.simpleName }.joinToString { it }
 
         this.logger.info("Adapters loaded: $names!")
 
@@ -74,9 +73,18 @@ class SandstoneBukkit : JavaPlugin() {
         SandstoneInit.initLogger(BukkitLogger(LoggerFixer(this.logger)))
         SandstoneInit.initLoggerFactory(BukkitLoggerFactory)
 
+        this.logger.info("Registering types...")
+        BukkitRegistry.register(BukkitGame)
+        this.logger.info("Types registered!")
+
+        this.logger.info("Initializing constants...")
+        SandstoneInit.initRegistryConstants(Sandstone.game, EntityTypes::class.java, null)
+        SandstoneInit.initRegistryConstants(Sandstone.game, ItemTypes::class.java, null)
+        SandstoneInit.initRegistryConstants(Sandstone.game, BlockTypes::class.java, null)
+        this.logger.info("Constants initialized!")
+
         SandstoneInit.loadPlugins(pluginsDir)
         SandstoneInit.startPlugins()
-
     }
 
     fun isServerAvailable(): Boolean {
@@ -106,6 +114,8 @@ class SandstoneBukkit : JavaPlugin() {
                 taskId = -1
             }
         }, 1 * 20L, 1 * 20L)
+
+        BukkitListeners.init(this)
     }
 
     override fun onDisable() {

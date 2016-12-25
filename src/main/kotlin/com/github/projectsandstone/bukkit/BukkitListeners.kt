@@ -25,37 +25,26 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit
 
-import com.github.jonathanxd.adapterhelper.Adapter
-import com.github.projectsandstone.api.Sandstone
-import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.projectsandstone.bukkit.listener.BlockInteractListener
+import com.github.projectsandstone.bukkit.listener.ChatMessageListener
+import com.github.projectsandstone.bukkit.listener.CommandEventListener
+import org.bukkit.Bukkit
+import org.bukkit.event.EventPriority
+import org.bukkit.event.player.AsyncPlayerChatEvent
+import org.bukkit.event.player.PlayerCommandPreprocessEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.server.ServerCommandEvent
+import org.bukkit.plugin.Plugin
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+object BukkitListeners {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
-
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
-
-    override val name: String
-        get() = this.adapteeInstance.name
-
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
-            }
-
-            return null
-        }
+    fun init(plugin: Plugin) {
+        Bukkit.getPluginManager().registerEvent(PlayerCommandPreprocessEvent::class.java, CommandEventListener, EventPriority.NORMAL, CommandEventListener, plugin)
+        Bukkit.getPluginManager().registerEvent(ServerCommandEvent::class.java, CommandEventListener, EventPriority.NORMAL, CommandEventListener, plugin)
+        Bukkit.getPluginManager().registerEvent(PlayerInteractEvent::class.java, BlockInteractListener, EventPriority.NORMAL, BlockInteractListener, plugin)
+        Bukkit.getPluginManager().registerEvent(AsyncPlayerChatEvent::class.java, ChatMessageListener, EventPriority.NORMAL, ChatMessageListener, plugin)
+    }
 
 }

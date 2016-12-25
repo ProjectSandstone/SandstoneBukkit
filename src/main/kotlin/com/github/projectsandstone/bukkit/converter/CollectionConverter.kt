@@ -27,34 +27,19 @@
  */
 package com.github.projectsandstone.bukkit.converter
 
-import com.github.jonathanxd.adapter.info.CallInfo
-import com.github.jonathanxd.adapter.spec.ConverterSpec
-import com.github.jonathanxd.adapter.utils.links.LinkUtil
-import com.github.projectsandstone.common.adapter.RegistryCandidate
-import com.github.projectsandstone.common.adapter.annotation.RegistryType
-import com.github.projectsandstone.common.adapter.annotation.RegistryTypes
-import java.util.*
+import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
 
-object CollectionConverter : RegistryCandidate<ConverterSpec> {
+object CollectionConverter : Converter<Collection<*>, Collection<*>> {
 
-    const val id_ = "COLLECTION_CONVERTER"
-
-    override val id = id_
-    override val spec = ConverterSpec(CollectionConverter::class.java, "convert", Collection::class.java, arrayOf(Collection::class.java))
-    override val registryType = RegistryTypes.Converter(Collection::class.java, Collection::class.java)
-
-    @JvmStatic
-    fun convert(callInfo: CallInfo, collection: Collection<Any>) : Collection<Any> {
-        val fields = callInfo.adapterClassInfo.fields
-
-        val adapterEnvironment = LinkUtil.getAdapterEnvironment(fields).orElseThrow({ UnsupportedOperationException("Cannot find adapter field.") })
-        val converted = ArrayList<Any>()
-
-        for (any in collection) {
-            converted.add(adapterEnvironment.adapt<Any>(any.javaClass, any).orElseThrow { UnsupportedOperationException("Cannot find adapter of ${any.javaClass}.") })
+    override fun convert(input: Collection<*>, adapter: Adapter<*>?, manager: AdapterManager): Collection<*> {
+        return input.map {
+            if(it != null)
+                manager.adaptUnchecked<Any, Any>(it.javaClass, it, emptyArray())
+            else
+                it
         }
-
-        return converted
     }
 
 }

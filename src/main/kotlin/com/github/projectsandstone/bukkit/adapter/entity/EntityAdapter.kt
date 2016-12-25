@@ -27,17 +27,26 @@
  */
 package com.github.projectsandstone.bukkit.adapter.entity
 
-import com.github.jonathanxd.adapter.annotations.Adapter
-import com.github.jonathanxd.adapter.annotations.AdapterEnv
-import com.github.jonathanxd.adapter.annotations.Invoke
+import com.github.jonathanxd.adapterhelper.Adapter
 import com.github.projectsandstone.api.entity.Entity
+import com.github.projectsandstone.api.world.Location
+import com.github.projectsandstone.api.world.World
+import com.github.projectsandstone.bukkit.util.adapt
+import com.github.projectsandstone.bukkit.util.alias.BukkitEntity
+import com.github.projectsandstone.bukkit.util.alias.BukkitLocation
+import com.github.projectsandstone.bukkit.util.convert
 import java.util.*
 
-@AdapterEnv
-@Adapter(target = org.bukkit.entity.Entity::class, interfaces = arrayOf(Entity::class))
-class EntityAdapter : Entity {
+interface EntityAdapter<out T: BukkitEntity> : Adapter<T>, Entity {
+
+    override val location: Location<World>
+        get() = this.adapterManager.adapt(this.adapteeInstance.location)
 
     override val uniqueId: UUID
-        @Invoke(method = "getUniqueId")
-        get() = throw UnsupportedOperationException()
+        get() = this.adapteeInstance.uniqueId
+
+    override fun teleport(location: Location<*>) {
+        this.adapteeInstance.teleport(this.adapterManager.convert<Location<*>, BukkitLocation>(location, this))
+    }
+
 }

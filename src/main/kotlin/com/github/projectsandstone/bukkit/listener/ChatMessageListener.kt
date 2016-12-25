@@ -25,37 +25,31 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.listener
 
-import com.github.jonathanxd.adapterhelper.Adapter
 import com.github.projectsandstone.api.Sandstone
-import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.projectsandstone.api.constants.SandstonePlugin
+import com.github.projectsandstone.api.event.player.PlayerMessageChannelEvent
+import com.github.projectsandstone.api.text.Text
+import com.github.projectsandstone.bukkit.util.convert
+import com.github.projectsandstone.common.adapter.Adapters
+import org.bukkit.event.Event
+import org.bukkit.event.Listener
+import org.bukkit.event.player.AsyncPlayerChatEvent
+import org.bukkit.plugin.EventExecutor
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+object ChatMessageListener : EventExecutor, Listener {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
-
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
-
-    override val name: String
-        get() = this.adapteeInstance.name
-
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
-            }
-
-            return null
+    override fun execute(listener: Listener, event: Event) {
+        if (event is AsyncPlayerChatEvent) {
+            val sand = Adapters.adapters.convert<AsyncPlayerChatEvent, PlayerMessageChannelEvent>(event, null)
+            Sandstone.eventManager.dispatch(sand, SandstonePlugin)
+            val bkt = Adapters.adapters.convert<Text, String>(sand.message, null)
+            event.message = bkt
+        } else {
+            Sandstone.logger.info("Unknown event type: '${event.javaClass}'!")
         }
+
+    }
 
 }

@@ -25,37 +25,35 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.converter.event
 
 import com.github.jonathanxd.adapterhelper.Adapter
-import com.github.projectsandstone.api.Sandstone
-import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
+import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.projectsandstone.api.event.SandstoneEventFactory
+import com.github.projectsandstone.api.event.command.CommandSendEvent
+import org.bukkit.event.server.ServerCommandEvent
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+object ServerCommandConverter : Converter<ServerCommandEvent, CommandSendEvent> {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
+    override fun convert(input: ServerCommandEvent, adapter: Adapter<*>?, manager: AdapterManager): CommandSendEvent {
+        val bktMessage = input.command
 
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
-
-    override val name: String
-        get() = this.adapteeInstance.name
-
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
-            }
-
-            return null
+        val toIndex = bktMessage.indexOf(' ').let {
+            if (it == -1)
+                bktMessage.length
+            else
+                it
         }
+
+        val command = bktMessage.substring(1, toIndex)
+        val args: Array<String> = if (toIndex + 1 >= bktMessage.length) emptyArray() else bktMessage.substring(toIndex + 1).split(' ').toTypedArray()
+
+        return SandstoneEventFactory.createEvent(TypeInfo.aEnd(CommandSendEvent::class.java), mapOf(
+                "command" to command,
+                "args" to args
+        ))
+    }
 
 }

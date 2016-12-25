@@ -25,37 +25,39 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.converter
 
 import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
 import com.github.projectsandstone.api.Sandstone
-import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.projectsandstone.api.entity.EntityType
+import com.github.projectsandstone.bukkit.util.alias.BukkitEntity
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+object EntityTypeConverter : Converter<EntityType, Class<BukkitEntity>> {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
+    @Suppress("UNCHECKED_CAST")
+    override fun convert(input: EntityType, adapter: Adapter<*>?, manager: AdapterManager): Class<BukkitEntity> {
+        return ClassConverter.getBukkitEquivalent(input.entityClass) as Class<BukkitEntity>
+    }
 
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
+    override fun revert(): Converter<Class<BukkitEntity>, EntityType> {
+        return Revert
+    }
 
-    override val name: String
-        get() = this.adapteeInstance.name
+    private object Revert : Converter<Class<BukkitEntity>, EntityType> {
 
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
-            }
+        override fun convert(input: Class<BukkitEntity>, adapter: Adapter<*>?, manager: AdapterManager): EntityType {
+            val name = input.simpleName.toLowerCase()
 
-            return null
+            return Sandstone.game.registry.getEntry(name, EntityType::class.java)
+                    ?: throw IllegalArgumentException("Cannot find entity '$name' in registry.")
         }
+
+        override fun revert(): Converter<EntityType, Class<BukkitEntity>> {
+            return EntityTypeConverter
+        }
+
+    }
 
 }

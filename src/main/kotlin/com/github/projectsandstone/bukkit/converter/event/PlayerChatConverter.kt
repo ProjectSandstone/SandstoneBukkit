@@ -25,20 +25,38 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.text.channel
+package com.github.projectsandstone.bukkit.converter.event
 
 import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
+import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.projectsandstone.api.entity.living.player.Player
+import com.github.projectsandstone.api.event.SandstoneEventFactory
+import com.github.projectsandstone.api.event.player.PlayerMessageChannelEvent
 import com.github.projectsandstone.api.text.Text
 import com.github.projectsandstone.api.text.channel.MessageReceiver
+import com.github.projectsandstone.bukkit.channel.BukkitChannel
 import com.github.projectsandstone.bukkit.util.adapt
+import com.github.projectsandstone.bukkit.util.alias.BukkitPlayer
 import com.github.projectsandstone.bukkit.util.convert
-import org.bukkit.command.CommandSender
+import org.bukkit.event.player.AsyncPlayerChatEvent
 
+object PlayerChatConverter : Converter<AsyncPlayerChatEvent, PlayerMessageChannelEvent> {
 
-interface MessageReceiverAdapter<out T: CommandSender> : Adapter<T>, MessageReceiver {
+    override fun convert(input: AsyncPlayerChatEvent, adapter: Adapter<*>?, manager: AdapterManager): PlayerMessageChannelEvent {
 
-    override fun sendMessage(text: Text) {
-        this.adapteeInstance.sendMessage(this.adapterManager.convert<Text, String>(text, this))
+        val members = manager.adaptAll(BukkitPlayer::class.java, input.recipients, Player::class.java).toMutableList<MessageReceiver>()
+        val channel = BukkitChannel(members)
+        val sandPlayer: Player = manager.adapt(input.player)
+        val message = manager.convert<String, Text>(input.message, adapter)
+
+        return SandstoneEventFactory.createEvent(TypeInfo.aEnd(PlayerMessageChannelEvent::class.java), mapOf(
+                "channel" to channel,
+                "message" to message,
+                "entity" to sandPlayer,
+                "player" to sandPlayer
+        ))
     }
 
 }

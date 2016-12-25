@@ -25,37 +25,30 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.converter.event
 
 import com.github.jonathanxd.adapterhelper.Adapter
-import com.github.projectsandstone.api.Sandstone
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
+import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.projectsandstone.api.block.BlockState
 import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.entity.living.player.User
-import org.bukkit.OfflinePlayer
-import java.util.*
+import com.github.projectsandstone.api.event.SandstoneEventFactory
+import com.github.projectsandstone.api.event.player.PlayerBlockInteractEvent
+import com.github.projectsandstone.bukkit.util.adapt
+import org.bukkit.event.player.PlayerInteractEvent
 
-interface UserAdapter<out T: OfflinePlayer> : Adapter<T>, User {
+object PlayerInteractConverter : Converter<PlayerInteractEvent, PlayerBlockInteractEvent> {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
+    override fun convert(input: PlayerInteractEvent, adapter: Adapter<*>?, manager: AdapterManager): PlayerBlockInteractEvent {
+        val player: Player = manager.adapt(input.player)
+        val block: BlockState = manager.adapt(input.clickedBlock.state)
 
-    override val isOnline: Boolean
-        get() = this.adapteeInstance.isOnline
-
-    override val name: String
-        get() = this.adapteeInstance.name
-
-    override val player: Player?
-        get() {
-            Sandstone.server.worlds.forEach {
-                it.entities.forEach {
-                    if (it.uniqueId == this.uniqueId) {
-                        return it as Player
-                    }
-                }
-            }
-
-            return null
-        }
+        return SandstoneEventFactory.createEvent(TypeInfo.aEnd(PlayerBlockInteractEvent::class.java), mapOf(
+                "entity" to player,
+                "player" to player,
+                "block" to block
+        ))
+    }
 
 }

@@ -27,36 +27,26 @@
  */
 package com.github.projectsandstone.bukkit.adapter
 
-import com.github.jonathanxd.adapter.annotations.*
+import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
 import com.github.projectsandstone.api.Server
 import com.github.projectsandstone.api.world.World
-import com.github.projectsandstone.bukkit.converter.CollectionConverter
+import com.github.projectsandstone.bukkit.util.adaptAll
+import com.github.projectsandstone.bukkit.util.alias.BukkitServer
 
-@AdapterEnv
-@Adapter(target = org.bukkit.Server::class, interfaces = arrayOf(Server::class))
-class BukkitServerAdapter : Server {
+class BukkitServerAdapter(override val adapteeInstance: BukkitServer, override val adapterManager: AdapterManager) : Adapter<BukkitServer>, Server {
 
-    override val ip: String
-        @Invoke(method = "getIp")
-        get() = throw UnsupportedOperationException()
+    override val ip: String = this.adapteeInstance.ip
 
-    override val maxPlayers: Int
-        @Invoke(method = "getMaxPlayers")
-        get() = throw UnsupportedOperationException()
+    override val maxPlayers: Int = this.adapteeInstance.maxPlayers
 
-    override val motd: String
-        @Invoke(method = "getMotd")
-        get() = throw UnsupportedOperationException()
+    override val motd: String = this.adapteeInstance.motd
 
-    override val port: Int
-        @Invoke(method = "getPort")
-        get() = throw UnsupportedOperationException()
+    override val port: Int = this.adapteeInstance.port
 
-    override val serverName: String
-        @Invoke(method = "getServerName")
-        get() = throw UnsupportedOperationException()
+    override val serverName: String = this.adapteeInstance.serverName
 
-    override val worlds: List<World>
-        @Invoke(method = "getWorlds", returnType = Return(type = List::class, converter = Converter(registryId = CollectionConverter.id_)))
-        get() = throw UnsupportedOperationException()
+    @Suppress("UNCHECKED_CAST")
+    override val worlds: List<World> = this.adapterManager.adaptAll(this.adapteeInstance.worlds)
+
 }

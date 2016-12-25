@@ -25,32 +25,41 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.adapter.entity.living.player
+package com.github.projectsandstone.bukkit.converter.event
 
 import com.github.jonathanxd.adapterhelper.Adapter
 import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.projectsandstone.api.entity.living.player.Player
-import com.github.projectsandstone.api.text.Text
-import com.github.projectsandstone.bukkit.adapter.entity.EntityAdapter
-import com.github.projectsandstone.bukkit.adapter.entity.living.LivingEntityAdapter
-import com.github.projectsandstone.bukkit.adapter.text.channel.MessageReceiverAdapter
-import com.github.projectsandstone.bukkit.util.alias.BukkitPlayer
-import com.github.projectsandstone.bukkit.util.convert
-import java.util.*
+import com.github.projectsandstone.api.event.SandstoneEventFactory
+import com.github.projectsandstone.api.event.command.CommandSendEvent
+import com.github.projectsandstone.api.util.internal.gen.event.PropertyInfo
+import com.github.projectsandstone.bukkit.util.adapt
+import org.bukkit.event.player.PlayerCommandPreprocessEvent
 
-class PlayerAdapter(override val adapteeInstance: BukkitPlayer, override val adapterManager: AdapterManager)
-    : Adapter<BukkitPlayer>, UserAdapter<BukkitPlayer>, LivingEntityAdapter<BukkitPlayer>, EntityAdapter<BukkitPlayer>, MessageReceiverAdapter<BukkitPlayer>,
-        Player {
+object PlayerCommandConverter : Converter<PlayerCommandPreprocessEvent, CommandSendEvent> {
 
-    override val uniqueId: UUID
-        get() = this.adapteeInstance.uniqueId
+    private val extraProp = PropertyInfo("player", getterName = "getPlayer", type = Player::class.java)
 
-    override fun kick() {
-        this.adapteeInstance.kickPlayer("Unknown Reason!")
-    }
+    override fun convert(input: PlayerCommandPreprocessEvent, adapter: Adapter<*>?, manager: AdapterManager): CommandSendEvent {
+        val bktMessage = input.message
+        val toIndex = bktMessage.indexOf(' ').let {
+            if (it == -1)
+                bktMessage.length
+            else
+                it
+        }
 
-    override fun kick(reason: Text) {
-        this.adapteeInstance.kickPlayer(this.adapterManager.convert(reason, this))
+        val command = bktMessage.substring(1, toIndex)
+        val args: Array<String> = if (toIndex + 1 >= bktMessage.length) emptyArray() else bktMessage.substring(toIndex + 1).split(' ').toTypedArray()
+        val sandPlayer: Player = manager.adapt(input.player)
+
+        return SandstoneEventFactory.createEvent(TypeInfo.aEnd(CommandSendEvent::class.java), mapOf(
+                "command" to command,
+                "args" to args,
+                "player" to sandPlayer
+        ), listOf(extraProp))
     }
 
 }

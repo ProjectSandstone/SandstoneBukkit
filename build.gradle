@@ -1,26 +1,25 @@
 buildscript {
-    apply from: 'gradle/versions.gradle'
+    apply from: project(":SandstoneAPI").file('gradle/versions.gradle')
 
     repositories {
         mavenCentral()
+        jcenter()
+        maven { url "http://dl.bintray.com/kotlin/kotlin-eap-1.1" }
+        maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
+        classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:$license_version"
+        classpath "com.github.jengelman.gradle.plugins:shadow:$shadow_version"
     }
-
-}
-
-plugins {
-    id 'com.github.hierynomus.license' version '0.11.0'
-    id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
 group 'com.github.projectsandstone'
 version '1.0-SNAPSHOT'
 
-apply from: 'gradle/sandstone.gradle'
+apply from: project(":SandstoneAPI").file("gradle/sandstone.gradle")
 
 repositories {
     maven {
@@ -29,27 +28,45 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.ProjectSandstone:SandstoneCommon:2de63f141d'
-    compile(group: 'org.spigotmc', name: 'spigot-api', version: '1.9-R0.1-SNAPSHOT') {
+    compile project(':SandstoneCommon')
+    compile project(':SandstoneAPI')
+
+    compileOnly 'com.github.JonathanxD:TypeAliasGen:1.1.9'
+    compile(group: 'org.spigotmc', name: 'spigot-api', version: '1.11-R0.1-SNAPSHOT') {
         exclude group: 'net.md-5', module: 'bungeecord-chat'
     }
 }
 
 shadowJar {
     dependencies {
+        include(project(":SandstoneCommon"))
+        include(project(":SandstoneAPI"))
         include(dependency("com.google.inject:guice"))
         include(dependency("javax.inject:javax.inject"))
         include(dependency("aopalliance:aopalliance"))
         include(dependency("com.google.guava:guava"))
         include(dependency("com.flowpowered:flow-math"))
+        include(dependency("io.github.lukehutch:fast-classpath-scanner"))
         include(dependency("org.jetbrains.kotlin:kotlin-stdlib"))
         include(dependency("org.jetbrains.kotlin:kotlin-runtime"))
         include(dependency("com.github.JonathanxD:JwIUtils"))
-        include(dependency("com.github.ProjectSandstone:SandstoneAPI"))
-        include(dependency("com.github.ProjectSandstone:SandstoneCommon"))
-        include(dependency("com.github.JonathanxD:Adapter"))
+        include(dependency("com.github.JonathanxD:AdapterHelper"))
         include(dependency("com.github.JonathanxD:CodeAPI"))
+        include(dependency("com.github.JonathanxD:CodeAPI-Conversions"))
+        include(dependency("com.github.JonathanxD:CodeProxy"))
         include(dependency("org.ow2.asm:asm-all"))
         include(dependency("com.github.zafarkhaja:java-semver"))
     }
+}
+
+// This task will generate type alias for all Bukkit classes
+// Make sure to run licenseFormat task to add license header to file
+task genTypeAliases(type: JavaExec) {
+    classpath sourceSets.main.compileClasspath
+    main = "com.github.jonathanxd.typealiasgen.TypeAliasGenKt"
+    args "org.bukkit", "com.github.projectsandstone.bukkit.util.alias", "~", "Bukkit", "~", "src/main/kotlin/com/github/projectsandstone/bukkit/util/alias/BukkitClasses.kt", "true"
+}
+
+dokka {
+    enabled = false
 }

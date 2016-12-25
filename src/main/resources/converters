@@ -1,3 +1,8 @@
 com.github.projectsandstone.bukkit.converter.TextConverter
+com.github.projectsandstone.bukkit.converter.ArrayToListConverter
 com.github.projectsandstone.bukkit.converter.CollectionConverter
 com.github.projectsandstone.bukkit.converter.FileToPathConverter
+com.github.projectsandstone.bukkit.converter.LocationConverter
+com.github.projectsandstone.bukkit.converter.LocationToBukkitConverter
+com.github.projectsandstone.bukkit.converter.ClassConverter
+com.github.projectsandstone.bukkit.converter.EntityTypeConverter

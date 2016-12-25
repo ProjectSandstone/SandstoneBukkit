@@ -25,25 +25,21 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.projectsandstone.bukkit.converter
+package com.github.projectsandstone.bukkit.adapter.world
 
-import com.github.jonathanxd.adapter.info.CallInfo
-import com.github.jonathanxd.adapter.spec.ConverterSpec
-import com.github.projectsandstone.common.adapter.RegistryCandidate
-import com.github.projectsandstone.common.adapter.annotation.RegistryType
-import com.github.projectsandstone.common.adapter.annotation.RegistryTypes
-import java.io.File
-import java.nio.file.Path
+import com.flowpowered.math.vector.Vector2i
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.projectsandstone.api.world.Chunk
+import com.github.projectsandstone.api.world.World
+import com.github.projectsandstone.bukkit.util.adapt
+import com.github.projectsandstone.bukkit.util.alias.BukkitChunk
 
-object FileToPathConverter : RegistryCandidate<ConverterSpec> {
+object ChunkFactory : (BukkitChunk, AdapterManager) -> Chunk {
+    override fun invoke(p1: BukkitChunk, p2: AdapterManager): Chunk {
+        val world = p1.world
 
-    override val id = "FILE_TO_PATH"
-    override val spec = ConverterSpec(FileToPathConverter::class.java, "convert", Path::class.java, arrayOf(File::class.java))
-    override val registryType = RegistryTypes.Converter(File::class.java, Path::class.java)
+        val sandWorld: World = p2.adapt(world)
 
-    @JvmStatic
-    fun convert(callInfo: CallInfo, file: File): Path {
-        return file.toPath()
+        return Chunk(sandWorld, Vector2i(p1.x, p1.z))
     }
-
 }

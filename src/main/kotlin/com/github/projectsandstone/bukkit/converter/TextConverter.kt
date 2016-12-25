@@ -27,59 +27,53 @@
  */
 package com.github.projectsandstone.bukkit.converter
 
-import com.github.jonathanxd.adapter.info.CallInfo
-import com.github.jonathanxd.adapter.spec.ConverterSpec
+import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.jonathanxd.adapterhelper.Converter
 import com.github.projectsandstone.api.text.Text
 import com.github.projectsandstone.api.text.style.TextColor
+import com.github.projectsandstone.api.text.style.TextColors
 import com.github.projectsandstone.api.text.style.TextFormat
-import com.github.projectsandstone.common.adapter.RegistryCandidate
-import com.github.projectsandstone.common.adapter.annotation.RegistryTypes
+import com.github.projectsandstone.api.text.style.TextFormats
+import com.github.projectsandstone.api.util.style.Color
 import org.bukkit.ChatColor
 
-//@AdapterRegistry(id = "TEXT_TO_STRING_CONVERTER", type = Type.CONVERTER)
-object TextConverter : RegistryCandidate<ConverterSpec> {
+object TextConverter : Converter<Text, String> {
 
-    const val id_: String = "TEXT_TO_STRING_CONVERTER"
-
-    override val id: String = id_
-    override val spec = ConverterSpec(TextConverter::class.java, "convert", String::class.java, arrayOf(Text::class.java))
-    override val registryType = RegistryTypes.Converter(Text::class.java, String::class.java)
-
-    @JvmStatic
-    fun convert(callInfo: CallInfo, text: Text): String {
+    override fun convert(input: Text, adapter: Adapter<*>?, manager: AdapterManager): String {
         val builder = StringBuilder()
 
-        this.convertAll(callInfo, text, builder)
+        this.convertAll(input, builder)
 
         return builder.toString()
     }
 
     @JvmStatic
-    fun convertAll(callInfo: CallInfo, text: Text, builder: StringBuilder) {
-        this.convertTextIndividual(callInfo, text, builder)
+    fun convertAll(text: Text, builder: StringBuilder) {
+        this.convertTextIndividual(text, builder)
         val parent = text.parent
 
-        if (parent != null && parent.size > 0) {
+        if (parent != null && parent.isNotEmpty()) {
             parent.forEach {
-                this.convertAll(callInfo, it, builder)
+                this.convertAll(it, builder)
             }
         }
     }
 
     @JvmStatic
-    fun convertTextIndividual(callInfo: CallInfo, text: Text, builder: StringBuilder) {
-        builder.append(this.convertColor(callInfo, text.color))
-        builder.append(this.convertFormat(callInfo, text.format))
+    fun convertTextIndividual(text: Text, builder: StringBuilder) {
+        builder.append(this.convertColor(text.color))
+        builder.append(this.convertFormat(text.format))
         builder.append(text.content)
     }
 
     @JvmStatic
-    fun convertColor(callInfo: CallInfo, textColor: TextColor): String {
+    fun convertColor(textColor: TextColor): String {
         return ChatColor.valueOf(textColor.name.toUpperCase()).toString()
     }
 
     @JvmStatic
-    fun convertFormat(callInfo: CallInfo, textFormat: TextFormat): String {
+    fun convertFormat(textFormat: TextFormat): String {
         val builder = StringBuilder()
 
         if (textFormat.bold)
@@ -97,6 +91,111 @@ object TextConverter : RegistryCandidate<ConverterSpec> {
         if (textFormat.underline)
             builder.append(ChatColor.UNDERLINE)
 
+        if (textFormat == TextFormats.NORMAL)
+            builder.append(ChatColor.RESET)
+
         return builder.toString()
+    }
+
+    override fun revert(): Converter<String, Text>? = Revert
+
+    object Revert : Converter<String, Text> {
+        override fun convert(input: String, adapter: Adapter<*>?, manager: AdapterManager): Text {
+            val strBuilder = StringBuilder()
+            val args = mutableListOf<Any>()
+
+            fun build() {
+                if (strBuilder.isNotEmpty()) {
+                    args.add(strBuilder.toString())
+                    strBuilder.setLength(0)
+                }
+            }
+
+            var index = -1
+
+            val chars = input.toCharArray()
+            val iter = chars.iterator()
+
+            while (iter.hasNext()) {
+                val c = iter.nextChar()
+                ++index
+
+                if (c == '§' && index + 1 < chars.size) {
+                    val next = chars[index + 1]
+
+                    if (this.isCode(next)) {
+                        build()
+                        args.add(this.convertCode(next))
+                        iter.nextChar() // Skip next
+                    } else {
+                        strBuilder.append(c)
+                    }
+                } else {
+                    strBuilder.append(c)
+                }
+
+                if (!iter.hasNext()) {
+                    build()
+                }
+            }
+
+            return Text.of(*args.toTypedArray())
+        }
+
+        override fun revert(): Converter<Text, String>? = TextConverter
+
+        fun isCode(input: Char) = this.isFormatCode(input) || this.isColorCode(input)
+
+        fun isFormatCode(input: Char) = when (input) {
+            in 'k'..'o', 'r' -> true
+            else -> false
+        }
+
+
+        fun isColorCode(input: Char) = when (input) {
+            in '0'..'9', in 'a'..'f' -> true
+            else -> false
+        }
+
+        fun convertCode(input: Char): Any {
+            if (this.isFormatCode(input))
+                return this.convertFormat(input)
+
+            if (this.isColorCode(input))
+                return this.convertColor(input)
+
+            throw IllegalArgumentException("$input is not a valid code!")
+        }
+
+        fun convertColor(input: Char): TextColor = when (input) {
+            '0' -> TextColors.BLACK
+            '1' -> TextColors.DARK_BLUE
+            '2' -> TextColors.DARK_GREEN
+            '3' -> TextColors.DARK_AQUA
+            '4' -> TextColors.DARK_RED
+            '5' -> TextColors.DARK_PURPLE
+            '6' -> TextColors.GOLD
+            '7' -> TextColors.GRAY
+            '8' -> TextColors.DARK_GRAY
+            '9' -> TextColors.BLUE
+            'a' -> TextColors.GREEN
+            'b' -> TextColors.AQUA
+            'c' -> TextColors.RED
+            'd' -> TextColors.LIGHT_PURPLE
+            'e' -> TextColors.YELLOW
+            'f' -> TextColors.WHITE
+            else -> throw IllegalArgumentException("$input is not a valid color code!")
+        }
+
+        fun convertFormat(input: Char): TextFormat = when (input) {
+            'k' -> TextFormats.OBFUSCATED
+            'l' -> TextFormats.BOLD
+            'm' -> TextFormats.STRIKE_THROUGH
+            'n' -> TextFormats.UNDERLINE
+            'o' -> TextFormats.ITALIC
+            'r' -> TextFormats.NORMAL
+            else -> throw IllegalArgumentException("$input is not a valid format code!")
+        }
+
     }
 }

@@ -27,73 +27,64 @@
  */
 package com.github.projectsandstone.bukkit.adapter.world
 
-import com.flowpowered.math.vector.Vector3d
-import com.github.jonathanxd.adapter.annotations.*
-import com.github.jonathanxd.adapter.info.CallInfo
-import com.github.jonathanxd.adapter.utils.links.LinkUtil
+import com.flowpowered.math.vector.Vector3i
+import com.github.jonathanxd.adapterhelper.Adapter
+import com.github.jonathanxd.adapterhelper.AdapterManager
+import com.github.projectsandstone.api.block.BlockState
 import com.github.projectsandstone.api.entity.Entity
-import com.github.projectsandstone.api.entity.living.player.Player
+import com.github.projectsandstone.api.entity.EntityType
+import com.github.projectsandstone.api.event.Source
 import com.github.projectsandstone.api.text.Text
+import com.github.projectsandstone.api.text.channel.MessageReceiver
 import com.github.projectsandstone.api.world.Chunk
 import com.github.projectsandstone.api.world.Location
-import com.github.projectsandstone.api.world.Selection
 import com.github.projectsandstone.api.world.World
-import com.github.projectsandstone.api.world.extent.Extent
-import com.github.projectsandstone.bukkit.converter.CollectionConverter
-import java.io.File
+import com.github.projectsandstone.bukkit.util.adapt
+import com.github.projectsandstone.bukkit.util.adaptAll
+import com.github.projectsandstone.bukkit.util.alias.BukkitEntity
+import com.github.projectsandstone.bukkit.util.alias.BukkitLocation
+import com.github.projectsandstone.bukkit.util.alias.BukkitWorld
 import java.nio.file.Path
 import java.util.*
 
-@AdapterEnv
-@Adapter(target = org.bukkit.World::class, interfaces = arrayOf(World::class))
-class WorldAdapter : World {
+class WorldAdapter(override val adapteeInstance: BukkitWorld, override val adapterManager: AdapterManager) : Adapter<BukkitWorld>, World {
 
-    override val uniqueId: UUID
-        @Invoke(method = "getUID", returnType = Return(type = UUID::class))
-        get() = throw UnsupportedOperationException()
+    override val name: String = this.adapteeInstance.name
+
+    override val directory: Path = this.adapteeInstance.worldFolder.toPath()
 
     override val entities: Collection<Entity>
-        @Invoke(method = "getEntities", returnType = Return(type = List::class, converter = Converter(registryId = CollectionConverter.id_)))
-        get() = throw UnsupportedOperationException()
+        get() = this.adapterManager.adaptAll(this.adapteeInstance.entities)
 
     override val loadedChunks: List<Chunk>
-        get() = throw UnsupportedOperationException()
+        get() = this.adapterManager.adaptAll(this.adapteeInstance.loadedChunks.toList())
 
-    override val directory: Path
-        @Invoke(method = "getWorldFolder", returnType = Return(type = File::class))
-        get() = throw UnsupportedOperationException()
+    override val uniqueId: UUID = this.adapteeInstance.uid
 
-    override val name: String
-        @Invoke(method = "getName")
-        get() = throw UnsupportedOperationException("not implemented")
+    override fun spawnEntity(type: EntityType, location: Location<*>): Entity {
+        val bukkitLocation = this.adapterManager.adapt<Location<*>, BukkitLocation>(location)
+        val bukkitEntityType = this.adapterManager.adapt<EntityType, Class<BukkitEntity>>(type)
 
-    @Invoke(passCallInfo = true, targetClass = WorldAdapter::class, method = "sendMessageToWorld", parameters = arrayOf(Parameter(type = Text::class)))
+        return this.adapterManager.adapt(this.adapteeInstance.spawn(bukkitLocation, bukkitEntityType))
+    }
+
+    override fun getBlock(location: Vector3i): BlockState {
+        val bukkitBlock = this.adapteeInstance.getBlockAt(location.x, location.y, location.z)
+
+        return this.adapterManager.adapt(bukkitBlock.state)
+    }
+
+    override fun setBlock(location: Vector3i, blockState: BlockState, source: Source?) {
+        val bukkitBlock = this.adapteeInstance.getBlockAt(location.x, location.y, location.z)
+
+        bukkitBlock.type = this.adapterManager.adapt(blockState.type)
+    }
+
     override fun sendMessage(text: Text) {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun getLocation(position: Vector3d): Location<Extent> {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun select(from: Vector3d, to: Vector3d): Selection {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    companion object {
-        // Extension method because Bukkit World doesn't have a sendMessage() method.
-        @Suppress("unused")
-        @JvmStatic
-        fun sendMessageToWorld(callInfo: CallInfo, text: Text) {
-            val bukkitWorld = callInfo.adapterClassInfo.wrappedInstance as org.bukkit.World
-
-            val fields = callInfo.adapterClassInfo.fields
-            val adapterEnvironment = LinkUtil.getAdapterEnvironment(fields).orElseThrow({ UnsupportedOperationException("Cannot find adapter field.") })
-
-            bukkitWorld.players.forEach { player ->
-                adapterEnvironment.adapt<Player>(org.bukkit.entity.Player::class.java, player).get().sendMessage(text)
+        this.entities.forEach {
+            if (it is MessageReceiver) {
+                it.sendMessage(text)
             }
-
         }
     }
 }
